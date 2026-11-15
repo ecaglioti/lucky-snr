@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lucky-snr"
+version = "0.1.0"
+description = "Compare lucky-imaging stacks (AutoStakkert! or any stacker) with the SNR measured from two independent half-stacks"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Emanuele Caglioti" }]
+requires-python = ">=3.9"
+dependencies = ["numpy", "scipy", "tifffile", "matplotlib", "pillow"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+lucky-snr = "lucky_snr.cli:main"
+
+[tool.setuptools]
+packages = ["lucky_snr"]

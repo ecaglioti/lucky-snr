@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.DS_Store
+# data and results: never commit videos or stacks
+*.ser
+*.tif
+*.tiff
+*.fits
+*.fit
+*.as3
+lucky_snr.txt
+lucky_snr.csv
+lucky_snr.png
+*_split.csv
+!docs/*.png

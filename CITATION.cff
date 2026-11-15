@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use lucky-snr, please cite it as below."
+title: "lucky-snr: comparing lucky-imaging stacks with the SNR measured from two independent half-stacks"
+type: software
+authors:
+  - family-names: Caglioti
+    given-names: Emanuele
+version: 0.1.0
+license: MIT
