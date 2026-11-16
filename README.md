@@ -59,6 +59,11 @@ With **AutoStakkert!**:
 3. Close the file, open the other half (`_B.ser`) and repeat with **exactly the same settings**.
 4. Repeat for every AP size, always reopening the files.
 
+Check the stacks before comparing: A and B must show the same field, with the same size, no doubled features and no
+black borders. With *Surface* stabilization, place the anchor on a contrasted feature (a crater rim), not on a flat
+area: on a featureless floor the global alignment can lose track for part of the frames. `compare` warns when a
+half-stack looks broken.
+
 Each half must be stacked on its own: if AS! reuses the reference frame or the AP grid of one half for the other,
 the halves are no longer independent and their SNR is grossly inflated (`compare` warns when this happens).
 AS! writes a session file (`.as3`) next to each stack: `lucky-snr` reads the settings from it and pairs A with B by
@@ -86,7 +91,30 @@ plain-language advice:
 
 ## Example
 
-*(Example on a lunar video, with table and plot: to be added.)*
+Crater Ptolemaeus, Celestron NexStar 6SE (150 mm, f/10) with an SVBONY SV705C camera and an IR-pass filter:
+2884 frames, split into two halves of 1440 frames (512 × 512 crop), each stacked with AutoStakkert! 4.0.11 with
+AP sizes 24, 48, 96 and 25, 50, 75, 100 % of the frames.
+
+    lucky-snr compare stacks/ --pixel 2.9 --focal 1500 --aperture 150 --wavelength 750
+
+    k (cycles/px)          0.04     0.08     0.12   cutoff   info(kbit)
+    AS! AP24 25%          128.4     11.6      0.0    0.120       11.3
+    AS! AP24 100%        1828.6    224.5      4.4    0.136       24.0
+    AS! AP48 75%         2422.7    352.2      5.7    0.132       24.8
+    AS! AP48 100%        2837.9    351.1      6.4    0.136       25.4
+    AS! AP96 25%         1073.4    109.2      1.2    0.124       19.3
+    AS! AP96 100%        2962.0    323.0      5.7    0.132       25.6
+    (excerpt)
+
+    best (most information): AS! AP96 100%   cutoff 0.132 cycles/px
+    equivalent within the uncertainty: AS! AP24 100%, AS! AP48 75%, AS! AP48 100%
+
+![SNR(k) of the twelve settings](docs/example_ptolemaeus.png)
+
+What it says for this video: with steady seeing, more frames win (100 % or 75 %), and the AP size matters less than
+the frame percentage; small APs with few frames (AP 24, 25 %) are clearly worse. The cutoff, about 0.13 cycles/px
+(a period of 7.6 px, 3″), is well below the sampling limit: the image is oversampled for this night, and a shorter
+focal length or 2 × 2 binning would have given more signal per pixel with no loss of detail.
 
 ## Limitations
 

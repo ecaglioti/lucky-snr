@@ -260,12 +260,26 @@ def plot(res, path):
     best = max(res, key=lambda r: r['bits'])
     kmax = max(r['cutoff'] for r in res) * 1.05
     fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharex=True, gridspec_kw=dict(height_ratios=(3, 2)))
-    for r in res:
+    # colour by AP size and shade by frame percentage when the names allow it (AS! stacks), else one colour each
+    import re
+    parsed = [re.search(r'AP(\d+)\D+(\d+)%', r['name']) for r in res]
+    if all(parsed):
+        aps = sorted({int(m.group(1)) for m in parsed}); pcs = sorted({int(m.group(2)) for m in parsed})
+        cmaps = [plt.cm.Blues, plt.cm.Oranges, plt.cm.Greens, plt.cm.Purples, plt.cm.Reds, plt.cm.Greys]
+        styles = []
+        for m in parsed:
+            cm = cmaps[aps.index(int(m.group(1))) % len(cmaps)]
+            shade = 0.45 + 0.5 * (pcs.index(int(m.group(2))) / max(len(pcs) - 1, 1))
+            styles.append(dict(color=cm(shade)))
+    else:
+        styles = [dict(color=plt.cm.tab20(i % 20)) for i in range(len(res))]
+    for r, st in zip(res, styles):
         m = r['snr'] > 0
-        ax[0].semilogy(r['k'][m], r['snr'][m], label=r['name'], lw=1.4)
+        lw = 2.4 if r is best else 1.4
+        ax[0].semilogy(r['k'][m], r['snr'][m], label=r['name'] + ('  (best)' if r is best else ''), lw=lw, **st)
         q = np.interp(r['k'], best['k'], best['snr'])
         mm = m & (q > 1) & (r['k'] > 0.02)
-        ax[1].plot(r['k'][mm], r['snr'][mm] / q[mm], lw=1.4)
+        ax[1].plot(r['k'][mm], r['snr'][mm] / q[mm], lw=lw, **st)
     ax[0].axhline(1, color='k', lw=0.7, ls='--')
     ax[0].set_ylabel('SNR of the full stack'); ax[0].set_title('SNR from independent halves')
     ax[0].grid(alpha=0.3, which='both'); ax[0].legend(fontsize=8)
