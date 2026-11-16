@@ -83,7 +83,16 @@ def run(pairs, side=512, ks=(.04, .08, .12, .16, .20, .24, .28), log=print):
         if min(r, rb) < 0.5:
             log('   -> SKIPPED: does not match the first stack (a different video or target?)')
             continue
-        rows.append(dict(name=name, A=A, B=B, s=s, sa=(dya, dxa), sb=(dyb, dxb), sharpened=(p[3] if len(p) > 3 else False)))
+        problems = []
+        ra = A.shape[0] * A.shape[1]; rb = B.shape[0] * B.shape[1]
+        if max(ra, rb) > 1.1 * min(ra, rb):
+            problems.append('A and B have different sizes (%dx%d vs %dx%d)' % (A.shape + B.shape))
+        for nm_, im in (('A', A), ('B', B)):
+            z = (im <= 0).mean()
+            if z > 0.005:
+                problems.append('%s has %.1f%% empty (black) pixels' % (nm_, 100 * z))
+        rows.append(dict(name=name, A=A, B=B, s=s, sa=(dya, dxa), sb=(dyb, dxb), sharpened=(p[3] if len(p) > 3 else False),
+                         problems=problems))
     # common square, in reference pixels
     lim = []
     for r in rows:
@@ -112,7 +121,7 @@ def run(pairs, side=512, ks=(.04, .08, .12, .16, .20, .24, .28), log=print):
                 sub.append([np.interp(k / s, kq, sq) for k in ks])
         out.append(dict(name=r['name'], k=kb_ref, snr=S, cutoff=kc * s, bits=core.information(kb, S, n) / s ** 2,
                         at=[np.interp(k / s, kb, S) for k in ks], sub=np.array(sub), sharpened=r['sharpened'],
-                        aniso=aniso, ang=ang))
+                        aniso=aniso, ang=ang, problems=r['problems']))
     return out, L
 
 
@@ -218,7 +227,22 @@ def report(res, ks, path=None, log=print, optics=None):
         lines.append('  * the stacker reused the alignment reference of one half for the other (AutoStakkert!: close and reopen')
         lines.append('    the two files for every AP size, instead of changing the AP size on the files already open);')
         lines.append('  * the two halves are not independent (same frames, or stacks of the same file).')
-    lines += advice(best, eq, optics, unreliable=best in warn)
+    bad = []
+    for r in res:
+        pr = list(r.get('problems', []))
+        lo = r['sub'][:, 0].min(); hi = r['sub'][:, 0].max()       # lowest tabulated k
+        if hi > 0 and lo < 0.05 * hi:
+            pr.append('part of the field shows almost no common signal even at k=%.2f' % ks[0])
+        if pr:
+            bad.append((r['name'], pr))
+    if bad:
+        lines.append('')
+        lines.append('WARNING - these stacks look broken (a failed alignment in the stacker?), so their rows are NOT reliable:')
+        for nm_, pr in bad:
+            lines.append('  * %s: %s' % (nm_, '; '.join(pr)))
+        lines.append('  Look at the A and B stacks: they should show the same field, with no doubled features and no black borders.')
+        lines.append('  If not, stack that half again with the same alignment settings as the other one.')
+    lines += advice(best, eq, optics, unreliable=(best in warn) or any(nm_ == best['name'] for nm_, _ in bad))
     txt = '\n'.join(lines); log(txt)
     if path:
         open(path + '.txt', 'w').write(txt + '\n')
