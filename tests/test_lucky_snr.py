@@ -4,6 +4,7 @@ import os
 import struct
 import sys
 import tempfile
+import gc
 import types
 
 import numpy as np
@@ -80,7 +81,8 @@ def test_split_equal_halves_thue_morse_and_drift():
     drift = np.c_[np.linspace(0, 20, N), np.linspace(0, -15, N)].round().astype(int)     # (dy, dx) per frame
     fr = np.array([np.roll(big, tuple(d), (0, 1))[60:188, 60:188] for d in drift])        # 128 x 128 frames
     fr = (fr / fr.max() * 30000 + rng.normal(0, 50, fr.shape)).clip(0, 65535)
-    with tempfile.TemporaryDirectory() as tmp:
+    # ignore_cleanup_errors: on Windows a file still mapped in memory cannot be deleted
+    with tempfile.TemporaryDirectory(**({"ignore_cleanup_errors": True} if sys.version_info >= (3, 10) else {})) as tmp:
         src = os.path.join(tmp, 'test.ser'); write_test_ser(src, fr)
         out = os.path.join(tmp, 'out', 'test')
         args = types.SimpleNamespace(ser=src, out=out, crop=side, center=None, block='20', scheme='thue-morse', frames=None)
@@ -96,6 +98,8 @@ def test_split_equal_halves_thue_morse_and_drift():
         # the crop follows the drift: the same scene in the first and the last frame of a half
         a0, a1 = np.asarray(A.frames[0], float), np.asarray(A.frames[A.n - 1], float)
         assert np.corrcoef(a0.ravel(), a1.ravel())[0, 1] > 0.95
+        del A, B, a0, a1                 # release the memory-mapped files before the folder is removed (Windows)
+        gc.collect()
 
 
 if __name__ == '__main__':
