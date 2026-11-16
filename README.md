@@ -8,6 +8,12 @@ contains at each spatial frequency, and tells you which setting is best and whic
 
 No reference image is needed, and the measure does not depend on how the stacks are sharpened afterwards.
 
+![Two AutoStakkert! settings on Ptolemaeus: similar stacks, very different noise](docs/example_ptolemaeus_images.png)
+
+*Two AutoStakkert! settings on the same video of Ptolemaeus. The stacks look alike, but the difference of the two
+independent halves shows 2.3 times more noise, and AP artefacts on the small crater, for the second one:
+`lucky-snr` turns this into a number for every spatial frequency.*
+
 ## Idea
 
 The stacks of the two halves contain the same object but independent noise. For each ring of spatial frequency k
