@@ -68,7 +68,8 @@ With **AutoStakkert!**:
 Check the stacks before comparing: A and B must show the same field, with the same size, no doubled features and no
 black borders. With *Surface* stabilization, place the anchor on a contrasted feature (a crater rim), not on a flat
 area: on a featureless floor the global alignment can lose track for part of the frames. `compare` warns when a
-half-stack looks broken.
+half-stack looks broken (structure in A and B that does not match); dark featureless areas, such as the night side
+beyond the terminator or the sky beyond the limb, are not mistaken for broken stacks.
 
 Each half must be stacked on its own: if AS! reuses the reference frame or the AP grid of one half for the other,
 the halves are no longer independent and their SNR is grossly inflated (`compare` warns when this happens).

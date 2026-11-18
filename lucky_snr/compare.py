@@ -65,6 +65,19 @@ def _scale(img, ref):
     return r
 
 
+def _low_k_coherence(a, b, k0):
+    """(rho, power) at low k (0.5 k0 - 1.5 k0): rho = Re<F_A F_B*> / sqrt(<|F_A|^2><|F_B|^2>), ~1 for well aligned
+    halves with signal, ~0 when the two stacks show different things; power = mean of <|F_A|^2>, <|F_B|^2>."""
+    n = a.shape[0]; w = np.outer(np.hanning(n), np.hanning(a.shape[1]))
+    FA = np.fft.fft2((a - a.mean()) * w); FB = np.fft.fft2((b - b.mean()) * w)
+    K = np.hypot(*np.meshgrid(np.fft.fftfreq(a.shape[0]), np.fft.fftfreq(a.shape[1]), indexing='ij'))
+    m = (K >= 0.5 * k0) & (K <= 1.5 * k0)
+    pa, pb = (abs(FA[m]) ** 2).mean(), (abs(FB[m]) ** 2).mean()
+    if pa <= 0 or pb <= 0:
+        return 0.0, 0.0
+    return float(np.real(FA[m] * np.conj(FB[m])).mean() / np.sqrt(pa * pb)), float((pa + pb) / 2)
+
+
 def run(pairs, side=512, ks=(.04, .08, .12, .16, .20, .24, .28), log=print):
     """pairs: list of (name, A path, B path[, sharpened]). Returns list of result dicts."""
     rows, ref = [], None
@@ -113,14 +126,16 @@ def run(pairs, side=512, ks=(.04, .08, .12, .16, .20, .24, .28), log=print):
         kb, S, kc, n = core.snr_halves(a_, b_)
         aniso, ang, _ = core.directional_check(a_, b_)
         kb_ref = kb * s                          # cycles per reference pixel
-        sub = []
+        sub = []; coh = []
         for qy in (0, Ls // 2):
             for qx in (0, Ls // 2):
                 sa_, sb_ = a_[qy:qy + Ls // 2, qx:qx + Ls // 2], b_[qy:qy + Ls // 2, qx:qx + Ls // 2]
                 kq, sq, _, _ = core.snr_halves(sa_, sb_, border=16)
                 sub.append([np.interp(k / s, kq, sq) for k in ks])
+                coh.append(_low_k_coherence(sa_, sb_, ks[0] / s))
+        coh = np.array(coh)
         out.append(dict(name=r['name'], k=kb_ref, snr=S, cutoff=kc * s, bits=core.information(kb, S, n) / s ** 2,
-                        at=[np.interp(k / s, kb, S) for k in ks], sub=np.array(sub), sharpened=r['sharpened'],
+                        at=[np.interp(k / s, kb, S) for k in ks], sub=np.array(sub), coh=coh, sharpened=r['sharpened'],
                         aniso=aniso, ang=ang, problems=r['problems']))
     return out, L
 
@@ -230,9 +245,15 @@ def report(res, ks, path=None, log=print, optics=None):
     bad = []
     for r in res:
         pr = list(r.get('problems', []))
-        lo = r['sub'][:, 0].min(); hi = r['sub'][:, 0].max()       # lowest tabulated k
-        if hi > 0 and lo < 0.05 * hi:
-            pr.append('part of the field shows almost no common signal even at k=%.2f' % ks[0])
+        # a sub-square with real structure in A and B but little in common = misalignment. A featureless sub-square
+        # (night side of the terminator, sky beyond the limb, a flat mare floor) has low SNR too, but is not an error.
+        if 'coh' in r:
+            rho, power = r['coh'][:, 0], r['coh'][:, 1]
+            broken = (power > 0.1 * power.max()) & (rho < 0.5)
+        else:
+            lo = r['sub'][:, 0].min(); hi = r['sub'][:, 0].max(); broken = np.array([hi > 0 and lo < 0.05 * hi])
+        if broken.any():
+            pr.append('part of the field shows structure in A and B but little in common at k=%.2f' % ks[0])
         if pr:
             bad.append((r['name'], pr))
     if bad:

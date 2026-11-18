@@ -102,6 +102,28 @@ def test_split_equal_halves_thue_morse_and_drift():
         gc.collect()
 
 
+def test_dark_area_is_not_a_broken_stack():
+    """a featureless dark region (night side of the terminator) must not raise the 'broken stack' warning,
+    while a misaligned quarter (structure in A and B, but different) must."""
+    import tifffile
+    from lucky_snr import compare
+    rng = np.random.default_rng(5)
+    S = texture(600, rng); S[:, 300:] = 0.02                                   # right half: night side
+    A = S + 0.003 * rng.standard_normal(S.shape)
+    B = S + 0.003 * rng.standard_normal(S.shape)
+    Bbad = B.copy(); Bbad[:300, :300] = np.roll(B[:300, :300], 25, axis=1)    # top-left quarter shifted
+    with tempfile.TemporaryDirectory(**({"ignore_cleanup_errors": True} if sys.version_info >= (3, 10) else {})) as tmp:
+        files = {}
+        for nm, im in (('A', A), ('B', B), ('Bbad', Bbad)):
+            files[nm] = os.path.join(tmp, nm + '.tif'); tifffile.imwrite(files[nm], im.astype(np.float32))
+        for bname, expect in (('B', False), ('Bbad', True)):
+            lines = []
+            res, _ = compare.run([('test', files['A'], files[bname])], log=lambda *a: None)
+            compare.report(res, (.04, .08, .12), log=lines.append)
+            flagged = any('WARNING' in l for l in lines)
+            assert flagged == expect, (bname, [l for l in lines if 'WARNING' in l or 'field' in l])
+
+
 if __name__ == '__main__':
     for name, f in list(globals().items()):
         if name.startswith('test_'):
