@@ -123,6 +123,11 @@ the frame percentage; small APs with few frames (AP 24, 25 %) are clearly worse.
 (a period of 7.6 px, 3″), is well below the sampling limit: the image is oversampled for this night, and a shorter
 focal length or 2 × 2 binning would have given more signal per pixel with no loss of detail.
 
+These conclusions belong to this video, not to AutoStakkert! in general: the best AP size and frame percentage
+depend on the seeing, the target, the sampling and the length of the video. A night of worse seeing can favour
+fewer frames or other AP sizes. Split and compare again for each session, or at least for each change of
+equipment or target type.
+
 ## Limitations
 
 * The SNR measures **noise**, not errors common to both halves: a bias shared by A and B (a fixed sensor pattern,
