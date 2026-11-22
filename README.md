@@ -14,7 +14,7 @@ No reference image is needed, and the measure does not depend on how the stacks 
 independent halves shows 2.3 times more noise, and AP artefacts on the small crater, for the second one:
 `lucky-snr` turns this into a number for every spatial frequency.*
 
-## Idea
+## How it works
 
 The stacks of the two halves contain the same object but independent noise. For each ring of spatial frequency k
 (B registered on A), the signal-to-noise ratio of the **full** stack (A + B)/2 is
@@ -27,10 +27,14 @@ where F_A, F_B are the Fourier transforms of the two stacks. From it:
   only amplifies noise;
 * **information**: the sum over Fourier modes of log2(1 + SNR), in bits: a single number to rank the settings.
 
-Why this is the right yardstick: a linear sharpening filter (Wiener, unsharp mask, deconvolution) multiplies signal
-and noise by the same factor, so it does not change SNR(k). After an optimal deconvolution the error left at each
-frequency is P(k) / (1 + SNR(k)): the setting with the higher SNR gives the better image *after* processing, however
-soft the raw stack looks.
+Why SNR(k): a linear sharpening filter (Wiener, unsharp mask, deconvolution) multiplies signal and noise at each
+frequency by the same factor, so it does not change SNR(k). After the optimal linear (Wiener) deconvolution, the mean
+squared error left at frequency k is P(k) / (1 + SNR(k)), where P(k) is the power spectrum of the object: where a
+setting has the higher SNR, it gives the better image *after* processing, however soft the raw stack looks.
+
+The method is the spectral SNR from two independent half data sets used in cryo-electron microscopy (Fourier ring
+correlation: Saxton & Baumeister 1982; van Heel 1987), applied here to the choice of stacking settings in lucky
+imaging.
 
 ## Install
 
