@@ -49,8 +49,10 @@ and `pytest tests`.
 
     lucky-snr split video.ser
 
-* crops a 512 × 512 square that follows the drift (`--crop 0` for the full frame, `--center Y X` to choose the place);
-  the crop keeps the raw Bayer pattern, so colour videos stay colour videos;
+* by default crops a 512 × 512 square that follows the drift (`--center Y X` to choose the place). The crop is
+  optional: `--crop 0` keeps the full frame, for example a whole lunar disc. A crop gives smaller files and faster
+  stacking; the full frame gives the same frame ranking as the final stack (see Limitations). The halves keep the raw
+  Bayer pattern, so colour videos stay colour videos;
 * groups consecutive frames in blocks longer than the seeing correlation time (estimated automatically,
   `--block N` to force it) and assigns the blocks to the halves in Thue–Morse order (A B B A B A A B …), which
   cancels slow drifts between the halves (moving shadows, changing seeing, focus);
