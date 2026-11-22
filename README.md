@@ -92,6 +92,12 @@ its own sub-folder (the sub-folder name becomes the label), or give the pairs ex
 
     lucky-snr compare folder_with_the_stacks
 
+Stacks of different sizes are fine (a stacker often trims the borders differently): every stack is registered on
+the first one, and all of them are measured on the same square of the sky, inside the region common to all
+stacks (512 × 512 by default, `--side N` for a larger one, e.g. on a full lunar disc). Drizzled stacks are
+recognised by their scale. A and B of the same setting must come from the same split: a large size difference
+between them is reported as a problem.
+
 Output: a table (`lucky_snr.txt`, `.csv`) with SNR(k), cutoff and information for each setting; the best one and the
 settings statistically equivalent to it (with an uncertainty from four sub-squares); a plot (`lucky_snr.png`); and
 plain-language advice:
